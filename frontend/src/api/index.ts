@@ -63,7 +63,9 @@ export const runsApi = {
     suite_id: string;
     system_prompt_id?: string;
   }) => apiPost<TestRun[]>("/runs/batch", data),
-  list: () => apiGet<TestRun[]>("/runs"),
+  list: () =>
+    apiGet<{ runs: TestRun[]; total: number; page: number; page_size: number }>("/runs")
+      .then((res) => res.runs),
   get: (id: string) => apiGet<TestRun>(`/runs/${id}`),
   cancel: (id: string) => apiPost<TestRun>(`/runs/${id}/cancel`),
 };
