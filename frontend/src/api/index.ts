@@ -12,7 +12,9 @@ import type {
 } from "@/types";
 
 export const modelsApi = {
-  list: () => apiGet<Model[]>("/models"),
+  list: () =>
+    apiGet<{ models: Model[]; count: number }>("/models")
+      .then((res) => res.models),
   create: (data: { file_path: string }) => apiPost<Model>("/models", data),
   get: (id: string) => apiGet<Model>(`/models/${id}`),
   remove: (id: string) => apiDelete(`/models/${id}`),
@@ -77,7 +79,9 @@ export const resultsApi = {
     if (filters?.model_id) params.set("model_id", filters.model_id);
     if (filters?.suite_id) params.set("suite_id", filters.suite_id);
     const qs = params.toString();
-    return apiGet<TestResult[]>(qs ? `/results?${qs}` : "/results");
+    return apiGet<{ results: TestResult[]; total: number; page: number; page_size: number }>(
+      qs ? `/results?${qs}` : "/results"
+    ).then((res) => res.results);
   },
   get: (id: string) => apiGet<TestResult>(`/results/${id}`),
   rate: (id: string, rating: number) =>
