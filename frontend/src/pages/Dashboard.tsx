@@ -66,11 +66,11 @@ export default function Dashboard() {
       try {
         const [statsData, rankingsData, runsData] = await Promise.all([
           statsApi.get().catch(() => ({ models: 0, configs: 0, suites: 0, runs: 0, results: 0 })),
-          rankingsApi.get().catch(() => []),
+          rankingsApi.get().catch(() => ({ rankings: [], weights: {} })),
           runsApi.list().catch(() => []),
         ]);
         setStats(statsData);
-        setRankings(rankingsData);
+        setRankings(rankingsData.rankings ?? []);
         setRuns(runsData);
       } finally {
         setLoading(false);
