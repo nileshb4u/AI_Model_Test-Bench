@@ -4,7 +4,7 @@ sqlalchemy==2.0.36
 aiosqlite==0.20.0
 pydantic==2.10.3
 pydantic-settings==2.7.0
-llama-cpp-python==0.3.4
+llama-cpp-python==0.3.8
 psutil==6.1.1
 python-multipart==0.0.20
 websockets==14.1
