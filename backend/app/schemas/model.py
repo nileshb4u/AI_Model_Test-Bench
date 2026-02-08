@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class ModelCreate(BaseModel):
-    name: str
+    name: Optional[str] = None
     file_path: str
 
 
