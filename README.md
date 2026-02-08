@@ -124,7 +124,7 @@ Create **custom suites** with your own prompts, expected outputs, and grading ru
 | Backend | FastAPI (Python 3.11+) | Async REST API + WebSocket |
 | ORM | SQLAlchemy 2.0 (async) | Database layer |
 | Database | SQLite + aiosqlite | Zero-config persistence |
-| Inference | llama-cpp-python 0.3.4 | GGUF model execution |
+| Inference | llama-cpp-python 0.3.8 | GGUF model execution |
 | Metrics | psutil | RAM / system monitoring |
 | Bundler | Vite 6 | Frontend dev server + build |
 
@@ -389,7 +389,7 @@ AI_Model_Test-Bench/
 | aiosqlite | 0.20.0 | Async SQLite driver |
 | pydantic | 2.10.3 | Data validation |
 | pydantic-settings | 2.7.0 | Environment-based config |
-| llama-cpp-python | 0.3.4 | GGUF model inference |
+| llama-cpp-python | 0.3.8 | GGUF model inference |
 | psutil | 6.1.1 | System resource monitoring |
 | python-multipart | 0.0.20 | File upload support |
 | websockets | 14.1 | WebSocket protocol |
