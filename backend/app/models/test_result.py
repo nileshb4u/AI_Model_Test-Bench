@@ -21,6 +21,8 @@ class TestResult(Base):
     output_token_count = Column(Integer, nullable=True)
     peak_ram_mb = Column(Float, nullable=True)
     peak_vram_mb = Column(Float, nullable=True)
+    peak_npu_mb = Column(Float, nullable=True)
+    accelerator_used = Column(String(20), nullable=True)  # "cpu", "gpu", "npu", "gpu+npu"
     quality_score = Column(Float, nullable=True)
     scoring_method = Column(String(50), nullable=True)
     human_rating = Column(Integer, nullable=True)

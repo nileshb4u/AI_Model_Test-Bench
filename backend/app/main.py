@@ -274,6 +274,23 @@ async def health_check() -> dict:
     return {"status": "healthy", "version": "1.0.0"}
 
 
+@app.get("/api/system/accelerators")
+async def detect_accelerators() -> dict:
+    """Detect available hardware accelerators (GPU, NPU)."""
+    from app.services.metrics import detect_npu_device, get_gpu_memory_mb
+
+    gpu_available = get_gpu_memory_mb() is not None
+    npu_info = detect_npu_device()
+
+    return {
+        "gpu": {
+            "available": gpu_available,
+            "type": "nvidia" if gpu_available else None,
+        },
+        "npu": npu_info,
+    }
+
+
 @app.get("/api/stats")
 async def get_stats() -> dict:
     async with async_session() as db:

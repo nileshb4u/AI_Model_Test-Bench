@@ -28,6 +28,8 @@ export interface TestConfig {
   n_batch: number;
   n_threads: number;
   n_gpu_layers: number;
+  npu_enabled: boolean;
+  npu_device: string;
   seed: number;
   created_at: string;
 }
@@ -85,6 +87,8 @@ export interface TestResult {
   output_token_count: number;
   peak_ram_mb: number;
   peak_vram_mb: number;
+  peak_npu_mb: number | null;
+  accelerator_used: string | null;
   quality_score: number | null;
   scoring_method: string;
   human_rating: number | null;
@@ -110,6 +114,19 @@ export interface AppStats {
   suites: number;
   runs: number;
   results: number;
+}
+
+export interface NpuInfo {
+  available: boolean;
+  device: string;
+  name: string;
+  soc: string;
+  htp_available: boolean;
+}
+
+export interface AcceleratorInfo {
+  gpu: { available: boolean; type: string | null };
+  npu: NpuInfo;
 }
 
 export interface WSMessage {

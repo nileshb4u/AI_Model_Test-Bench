@@ -16,6 +16,8 @@ class TestResultResponse(BaseModel):
     output_token_count: Optional[int] = None
     peak_ram_mb: Optional[float] = None
     peak_vram_mb: Optional[float] = None
+    peak_npu_mb: Optional[float] = None
+    accelerator_used: Optional[str] = None
     quality_score: Optional[float] = None
     scoring_method: Optional[str] = None
     human_rating: Optional[int] = None
@@ -40,6 +42,8 @@ class TestResultDetail(BaseModel):
     output_token_count: Optional[int] = None
     peak_ram_mb: Optional[float] = None
     peak_vram_mb: Optional[float] = None
+    peak_npu_mb: Optional[float] = None
+    accelerator_used: Optional[str] = None
     quality_score: Optional[float] = None
     scoring_method: Optional[str] = None
     human_rating: Optional[int] = None

@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     models_directory: str = "./models"
     default_n_threads: int = 4
     default_n_gpu_layers: int = 0
+    default_npu_enabled: bool = False
+    default_npu_device: str = ""  # "qnn" for Snapdragon QNN, "" for none
+    qnn_sdk_path: str = ""  # Path to Qualcomm QNN SDK installation
     scoring_weight_quality: float = 0.5
     scoring_weight_speed: float = 0.3
     scoring_weight_efficiency: float = 0.2

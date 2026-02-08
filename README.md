@@ -411,27 +411,119 @@ AI_Model_Test-Bench/
 
 ---
 
-## GPU Support
+## Hardware Acceleration
 
-For GPU-accelerated inference, install `llama-cpp-python` with CUDA support:
+### NVIDIA GPU (CUDA)
 
 ```bash
 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
-Then set `n_gpu_layers` > 0 in your test configuration to offload layers to the GPU.
+Set `n_gpu_layers` > 0 in your test configuration to offload layers to the GPU.
 
-For AMD GPUs (ROCm):
+### AMD GPU (ROCm)
 
 ```bash
 CMAKE_ARGS="-DGGML_HIPBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
-For Apple Silicon (Metal):
+### Apple Silicon (Metal)
 
 ```bash
 CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
+
+### Qualcomm Snapdragon NPU
+
+AI Model Test Bench has first-class support for **Qualcomm Snapdragon NPUs** via the **QNN (Qualcomm Neural Network) SDK**. This enables inference acceleration on the **Hexagon Tensor Processor (HTP)** found in:
+
+- **Snapdragon X Elite / X Plus** (laptops — Copilot+ PCs)
+- **Snapdragon 8 Gen 3 / 8 Gen 2** (mobile)
+- **Snapdragon 7+ Gen 2** (mobile)
+
+#### Prerequisites
+
+1. **Qualcomm QNN SDK** — Download from the [Qualcomm AI Engine Direct SDK](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk) page
+2. **Snapdragon device** with NPU hardware (Windows on ARM or Linux ARM64)
+
+#### Setup
+
+**Step 1: Install the QNN SDK**
+
+```bash
+# Set the SDK path after installation
+export QNN_SDK_ROOT=/path/to/qnn-sdk
+
+# Add libraries to path
+export LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH   # Linux ARM64
+# or for Windows: add %QNN_SDK_ROOT%\lib\aarch64-windows-msvc to PATH
+```
+
+**Step 2: Build llama-cpp-python with QNN support**
+
+```bash
+CMAKE_ARGS="-DGGML_QNN=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+```
+
+> On Windows ARM64, you may need Visual Studio 2022 with ARM64 build tools:
+> ```bash
+> set CMAKE_ARGS=-DGGML_QNN=on
+> pip install llama-cpp-python --force-reinstall --no-cache-dir
+> ```
+
+**Step 3: Configure in the app**
+
+- Go to **Run Test** > **Custom Configuration** > **NPU Acceleration**
+- Toggle **Enable NPU Offloading** on
+- Select **Qualcomm QNN (Snapdragon HTP)** as the backend
+- The inference engine will route computation to the Hexagon NPU
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATB_DEFAULT_NPU_ENABLED` | `false` | Enable NPU by default for new configs |
+| `ATB_DEFAULT_NPU_DEVICE` | `""` | NPU device type (`"qnn"` for Snapdragon) |
+| `ATB_QNN_SDK_PATH` | `""` | Path to Qualcomm QNN SDK installation |
+| `QNN_SDK_ROOT` | — | Standard QNN SDK env var (used by llama.cpp) |
+
+#### Auto-Detection
+
+The app automatically detects Snapdragon NPU hardware via:
+- **Linux**: `/sys/class/misc/adsprpc-smd`, `/sys/devices/platform/soc/soc:qcom,npu`, `lscpu`
+- **Windows**: `wmic cpu get name`, QNN driver DLLs (`QnnHtp.dll`, `QnnSystem.dll`)
+- **QNN SDK**: `QNN_SDK_ROOT` environment variable
+
+Check detection status at: `GET /api/system/accelerators`
+
+```json
+{
+  "gpu": { "available": false, "type": null },
+  "npu": {
+    "available": true,
+    "device": "qnn",
+    "name": "Snapdragon NPU",
+    "soc": "Snapdragon X Elite",
+    "htp_available": true
+  }
+}
+```
+
+#### QNN Device Targets
+
+| Target | Description | Use Case |
+|--------|-----------|----------|
+| QNN HTP | Hexagon Tensor Processor (NPU) | Best for LLM inference — highest TOPS |
+| QNN GPU | Adreno GPU via QNN | Fallback if HTP doesn't support the model |
+| QNN CPU | CPU via QNN runtime | Debugging / baseline comparison |
+
+#### Performance Notes
+
+- Snapdragon X Elite HTP delivers up to **45 TOPS** of AI compute
+- Best performance with **Q4_0** and **Q4_K_M** quantized models
+- NPU uses shared system memory (unified architecture) — no separate VRAM
+- The app tracks NPU memory via Qualcomm's fastrpc debug interface where available
+- Combine `n_gpu_layers` with NPU for hybrid GPU+NPU execution on supported platforms
 
 ---
 

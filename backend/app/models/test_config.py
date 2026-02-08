@@ -27,6 +27,8 @@ class TestConfig(Base):
     n_batch = Column(Integer, default=512)
     n_threads = Column(Integer, default=4)
     n_gpu_layers = Column(Integer, default=0)
+    npu_enabled = Column(Integer, default=0)  # 0=off, 1=on
+    npu_device = Column(String(50), default="")  # "qnn" for Snapdragon, "" for none
     seed = Column(Integer, default=-1)
     created_at = Column(DateTime, default=datetime.utcnow)
 

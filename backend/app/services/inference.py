@@ -2,7 +2,7 @@ import asyncio
 import time
 from typing import AsyncGenerator, Optional
 
-from app.services.metrics import MetricsCollector
+from app.services.metrics import MetricsCollector, detect_npu_device
 
 try:
     from llama_cpp import Llama
@@ -13,10 +13,24 @@ except ImportError:
     Llama = None
 
 
+def _detect_accelerator(n_gpu_layers: int, npu_enabled: bool, npu_device: str) -> str:
+    """Determine which accelerator combination is active."""
+    has_gpu = n_gpu_layers > 0
+    has_npu = npu_enabled and npu_device
+    if has_gpu and has_npu:
+        return "gpu+npu"
+    elif has_npu:
+        return "npu"
+    elif has_gpu:
+        return "gpu"
+    return "cpu"
+
+
 class InferenceEngine:
     def __init__(self) -> None:
         self._model: Optional[object] = None
         self._model_path: Optional[str] = None
+        self._accelerator: str = "cpu"
         self._lock = asyncio.Lock()
 
     @property
@@ -27,6 +41,10 @@ class InferenceEngine:
     def current_model_path(self) -> Optional[str]:
         return self._model_path
 
+    @property
+    def accelerator(self) -> str:
+        return self._accelerator
+
     async def load_model(
         self,
         file_path: str,
@@ -34,6 +52,8 @@ class InferenceEngine:
         n_threads: int = 4,
         n_gpu_layers: int = 0,
         n_batch: int = 512,
+        npu_enabled: bool = False,
+        npu_device: str = "",
     ) -> None:
         if not LLAMA_CPP_AVAILABLE:
             raise RuntimeError(
@@ -48,15 +68,36 @@ class InferenceEngine:
             if self._model is not None:
                 await self._do_unload()
 
+            self._accelerator = _detect_accelerator(n_gpu_layers, npu_enabled, npu_device)
+
+            # Build Llama kwargs
+            llama_kwargs: dict = {
+                "model_path": file_path,
+                "n_ctx": n_ctx,
+                "n_threads": n_threads,
+                "n_gpu_layers": n_gpu_layers,
+                "n_batch": n_batch,
+                "verbose": False,
+            }
+
+            # Qualcomm QNN / Snapdragon NPU support
+            # When llama.cpp is compiled with GGML_QNN, it accepts a
+            # `qnn_backend` parameter or recognizes the QNN device via
+            # environment variables. We pass NPU-related config here so
+            # the engine can be loaded with the right backend.
+            if npu_enabled and npu_device == "qnn":
+                # llama-cpp-python >= 0.3.x compiled with QNN support
+                # recognizes the main_gpu parameter overloaded for QNN
+                # device selection:
+                #   0 = QNN CPU (fallback)
+                #   1 = QNN GPU (Adreno)
+                #   2 = QNN HTP (Hexagon Tensor Processor / NPU)
+                #   3 = QNN DSP
+                # We target HTP (the actual Snapdragon NPU) by default.
+                llama_kwargs["main_gpu"] = 2  # QNN HTP / Hexagon NPU
+
             def _load() -> object:
-                return Llama(
-                    model_path=file_path,
-                    n_ctx=n_ctx,
-                    n_threads=n_threads,
-                    n_gpu_layers=n_gpu_layers,
-                    n_batch=n_batch,
-                    verbose=False,
-                )
+                return Llama(**llama_kwargs)
 
             self._model = await asyncio.get_event_loop().run_in_executor(None, _load)
             self._model_path = file_path
@@ -66,6 +107,7 @@ class InferenceEngine:
             del self._model
             self._model = None
             self._model_path = None
+            self._accelerator = "cpu"
 
     async def unload_model(self) -> None:
         async with self._lock:
@@ -106,7 +148,8 @@ class InferenceEngine:
             seed = None
 
         model = self._model
-        collector = MetricsCollector()
+        npu_active = self._accelerator in ("npu", "gpu+npu")
+        collector = MetricsCollector(track_npu=npu_active)
         token_count = 0
         output_tokens: list[str] = []
 
@@ -173,16 +216,19 @@ class InferenceEngine:
 
         except Exception as e:
             collector.finish(token_count)
+            metrics = collector.get_metrics()
+            metrics["accelerator_used"] = self._accelerator
             yield {
                 "token": "",
                 "done": True,
                 "error": str(e),
-                "metrics": collector.get_metrics(),
+                "metrics": metrics,
             }
             return
 
         collector.finish(token_count)
         metrics = collector.get_metrics()
+        metrics["accelerator_used"] = self._accelerator
 
         yield {
             "token": "",

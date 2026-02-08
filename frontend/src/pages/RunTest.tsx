@@ -40,6 +40,8 @@ interface ConfigState {
   n_batch: number;
   n_threads: number;
   n_gpu_layers: number;
+  npu_enabled: boolean;
+  npu_device: string;
   seed: number;
 }
 
@@ -59,6 +61,8 @@ const defaultConfig: ConfigState = {
   n_batch: 512,
   n_threads: 4,
   n_gpu_layers: 0,
+  npu_enabled: false,
+  npu_device: "",
   seed: -1,
 };
 
@@ -136,6 +140,8 @@ export default function RunTest() {
           n_batch: preset.n_batch,
           n_threads: preset.n_threads,
           n_gpu_layers: preset.n_gpu_layers,
+          npu_enabled: preset.npu_enabled ?? false,
+          npu_device: preset.npu_device ?? "",
           seed: preset.seed,
         });
       }
@@ -611,6 +617,64 @@ export default function RunTest() {
                       }))
                     }
                   />
+                </div>
+              </div>
+
+              {/* NPU / Snapdragon */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                  NPU Acceleration
+                  <span className="text-xs font-normal text-zinc-500">(Snapdragon / Qualcomm QNN)</span>
+                </h4>
+                <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700 space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={config.npu_enabled}
+                      onChange={(e) =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          npu_enabled: e.target.checked,
+                          npu_device: e.target.checked ? "qnn" : "",
+                        }))
+                      }
+                      className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-primary-500 focus:ring-primary-500"
+                    />
+                    <div>
+                      <span className="text-sm text-zinc-200">Enable NPU Offloading</span>
+                      <p className="text-xs text-zinc-500">
+                        Route inference through the Hexagon Tensor Processor (HTP) on Snapdragon devices
+                      </p>
+                    </div>
+                  </label>
+                  {config.npu_enabled && (
+                    <div className="space-y-3 ml-7">
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+                          NPU Backend
+                        </label>
+                        <select
+                          value={config.npu_device}
+                          onChange={(e) =>
+                            setConfig((prev) => ({
+                              ...prev,
+                              npu_device: e.target.value,
+                            }))
+                          }
+                          className="input-base w-full"
+                        >
+                          <option value="qnn">Qualcomm QNN (Snapdragon HTP)</option>
+                        </select>
+                      </div>
+                      <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                        <span className="text-amber-400 text-sm">!</span>
+                        <p className="text-xs text-amber-300">
+                          Requires llama-cpp-python compiled with <code className="bg-zinc-800 px-1 rounded">GGML_QNN=on</code> and
+                          the Qualcomm QNN SDK installed. See README for setup instructions.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

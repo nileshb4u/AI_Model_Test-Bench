@@ -21,6 +21,8 @@ class TestConfigCreate(BaseModel):
     n_batch: int = 512
     n_threads: int = 4
     n_gpu_layers: int = 0
+    npu_enabled: bool = False
+    npu_device: str = ""  # "qnn" for Snapdragon QNN, "" for none
     seed: int = -1
 
 
@@ -41,6 +43,8 @@ class TestConfigUpdate(BaseModel):
     n_batch: Optional[int] = None
     n_threads: Optional[int] = None
     n_gpu_layers: Optional[int] = None
+    npu_enabled: Optional[bool] = None
+    npu_device: Optional[str] = None
     seed: Optional[int] = None
 
 
@@ -62,6 +66,8 @@ class TestConfigResponse(BaseModel):
     n_batch: int
     n_threads: int
     n_gpu_layers: int
+    npu_enabled: bool
+    npu_device: str
     seed: int
     created_at: Optional[datetime] = None
 
