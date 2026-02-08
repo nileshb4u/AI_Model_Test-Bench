@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database import async_session
+from app.database import async_session, get_db
 from app.models.model import Model
 from app.models.system_prompt import SystemPrompt
 from app.models.test_config import TestConfig
