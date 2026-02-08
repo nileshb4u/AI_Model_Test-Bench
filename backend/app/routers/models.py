@@ -51,9 +51,11 @@ async def register_model(
 
     metadata = parse_gguf_metadata(data.file_path)
 
+    name = data.name or os.path.splitext(os.path.basename(data.file_path))[0]
+
     model = Model(
         id=str(uuid.uuid4()),
-        name=data.name,
+        name=name,
         file_path=data.file_path,
         file_size_bytes=metadata.get("file_size_bytes"),
         architecture=metadata.get("architecture"),
@@ -101,10 +103,11 @@ async def delete_model(
     await db.flush()
 
 
-@router.post("/scan", response_model=list[dict])
+@router.post("/scan", response_model=list[ModelResponse])
 async def scan_directory(
     body: dict,
-) -> list[dict]:
+    db: AsyncSession = Depends(get_db),
+) -> list[ModelResponse]:
     directory = body.get("directory", "")
     if not directory:
         raise HTTPException(status_code=400, detail="Directory path is required")
@@ -112,22 +115,34 @@ async def scan_directory(
     if not os.path.isdir(directory):
         raise HTTPException(status_code=400, detail=f"Directory not found: {directory}")
 
-    found_files = []
+    registered_models = []
     for root, _dirs, files in os.walk(directory):
         for filename in files:
             if filename.lower().endswith(".gguf"):
                 full_path = os.path.join(root, filename)
-                metadata = parse_gguf_metadata(full_path)
-                found_files.append(
-                    {
-                        "file_path": full_path,
-                        "file_name": filename,
-                        "file_size_bytes": metadata.get("file_size_bytes"),
-                        "architecture": metadata.get("architecture"),
-                        "parameter_count": metadata.get("parameter_count"),
-                        "quantization": metadata.get("quantization"),
-                        "context_length": metadata.get("context_length"),
-                    }
-                )
 
-    return found_files
+                existing = await db.execute(
+                    select(Model).where(Model.file_path == full_path)
+                )
+                if existing.scalar_one_or_none():
+                    continue
+
+                metadata = parse_gguf_metadata(full_path)
+                name = os.path.splitext(filename)[0]
+
+                model = Model(
+                    id=str(uuid.uuid4()),
+                    name=name,
+                    file_path=full_path,
+                    file_size_bytes=metadata.get("file_size_bytes"),
+                    architecture=metadata.get("architecture"),
+                    parameter_count=metadata.get("parameter_count"),
+                    quantization=metadata.get("quantization"),
+                    context_length=metadata.get("context_length"),
+                    added_at=datetime.utcnow(),
+                )
+                db.add(model)
+                registered_models.append(model)
+
+    await db.flush()
+    return [ModelResponse.model_validate(m) for m in registered_models]
