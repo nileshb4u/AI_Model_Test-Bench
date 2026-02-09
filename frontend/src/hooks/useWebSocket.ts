@@ -14,10 +14,11 @@ export function useWebSocket(runId: string | null): UseWebSocketReturn {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const cleanedUpRef = useRef(false);
   const maxReconnectAttempts = 5;
 
   const connect = useCallback(() => {
-    if (!runId) return;
+    if (!runId || cleanedUpRef.current) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws/runs/${runId}`;
@@ -27,11 +28,16 @@ export function useWebSocket(runId: string | null): UseWebSocketReturn {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        if (cleanedUpRef.current) {
+          ws.close();
+          return;
+        }
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
       };
 
       ws.onmessage = (event) => {
+        if (cleanedUpRef.current) return;
         try {
           const msg: WSMessage = JSON.parse(event.data);
           setMessages((prev) => [...prev, msg]);
@@ -42,6 +48,7 @@ export function useWebSocket(runId: string | null): UseWebSocketReturn {
       };
 
       ws.onclose = () => {
+        if (cleanedUpRef.current) return;
         setIsConnected(false);
         wsRef.current = null;
 
@@ -63,6 +70,7 @@ export function useWebSocket(runId: string | null): UseWebSocketReturn {
   }, [runId]);
 
   useEffect(() => {
+    cleanedUpRef.current = false;
     setMessages([]);
     setLastMessage(null);
     setIsConnected(false);
@@ -71,10 +79,15 @@ export function useWebSocket(runId: string | null): UseWebSocketReturn {
     connect();
 
     return () => {
+      cleanedUpRef.current = true;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current) {
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onclose = null;
+        wsRef.current.onerror = null;
         wsRef.current.close();
         wsRef.current = null;
       }
