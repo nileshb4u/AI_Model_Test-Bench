@@ -5,7 +5,10 @@
   "description": "AI Model Test Bench - root workspace",
   "scripts": {
     "install:frontend": "npm install --prefix frontend",
-    "dev": "npm run dev --prefix frontend",
+    "install:backend": "pip install -r backend/requirements.txt",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "cd backend && python run.py",
+    "dev": "cd backend && python run.py & npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
     "preview": "npm run preview --prefix frontend"
   }
