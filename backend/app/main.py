@@ -2,7 +2,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 
@@ -265,7 +265,7 @@ app.include_router(rankings_router)
 
 
 @app.websocket("/ws/runs/{run_id}")
-async def ws_run_stream(websocket, run_id: str):
+async def ws_run_stream(websocket: WebSocket, run_id: str):
     await websocket_endpoint(websocket, run_id)
 
 
