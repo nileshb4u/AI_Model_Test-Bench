@@ -28,7 +28,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Accept": "application/json" },
   });
   return handleResponse<T>(response);
 }
@@ -54,7 +54,7 @@ export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
 export async function apiDelete(path: string): Promise<void> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Accept": "application/json" },
   });
   await handleResponse<void>(response);
 }
