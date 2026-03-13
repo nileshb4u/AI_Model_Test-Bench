@@ -36,6 +36,13 @@
 No cloud dependencies. No API keys. Everything runs on your machine.
 
 ---
+<h2 align="center">🎥 Demo Video</h2>
+
+<p align="center">
+  <a href="https://youtu.be/W9HgTB0e6aQ">
+    <img src="https://img.youtube.com/vi/W9HgTB0e6aQ/0.jpg" width="700">
+  </a>
+</p>
 
 ## Features
 
