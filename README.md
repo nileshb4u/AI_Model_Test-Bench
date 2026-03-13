@@ -26,7 +26,9 @@
 </p>
 
 ---
-
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nileshb4u/AI_Model_Test-Bench/main/testbench_dashboard.png" width="900"/>
+</p>
 ## What is this?
 
 **AI Model Test Bench** is a local-first web application that lets you systematically push GGUF AI models to their limits. Import your models, configure sampling parameters, run structured test suites, and see ranked results on a dashboard — all from your browser.
